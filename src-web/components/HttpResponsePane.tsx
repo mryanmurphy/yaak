@@ -21,6 +21,7 @@ import { EmptyStateText } from './EmptyStateText';
 import { RecentHttpResponsesDropdown } from './RecentHttpResponsesDropdown';
 import { ResponseHeaders } from './ResponseHeaders';
 import { ResponseInfo } from './ResponseInfo';
+import { ResponseTimeline } from './ResponseTimeline';
 import { AudioViewer } from './responseViewers/AudioViewer';
 import { CsvViewer } from './responseViewers/CsvViewer';
 import { EventStreamViewer } from './responseViewers/EventStreamViewer';
@@ -39,6 +40,7 @@ interface Props {
 const TAB_BODY = 'body';
 const TAB_HEADERS = 'headers';
 const TAB_INFO = 'info';
+const TAB_TIMELINE = 'timeline';
 
 export function HttpResponsePane({ style, className, activeRequestId }: Props) {
   const { activeResponse, setPinnedResponseId, responses } = usePinnedHttpResponse(activeRequestId);
@@ -75,6 +77,10 @@ export function HttpResponsePane({ style, className, activeRequestId }: Props) {
       {
         value: TAB_INFO,
         label: 'Info',
+      },
+      {
+        value: TAB_TIMELINE,
+        label: 'Timeline',
       },
     ],
     [activeResponse?.headers, contentType, setViewMode, viewMode],
@@ -193,6 +199,9 @@ export function HttpResponsePane({ style, className, activeRequestId }: Props) {
               </TabContent>
               <TabContent value={TAB_INFO}>
                 <ResponseInfo response={activeResponse} />
+              </TabContent>
+              <TabContent value={TAB_TIMELINE}>
+                <ResponseTimeline response={activeResponse} />
               </TabContent>
             </Tabs>
           )}

@@ -821,6 +821,7 @@ pub struct HttpResponse {
     pub elapsed_headers: i32,
     pub error: Option<String>,
     pub headers: Vec<HttpResponseHeader>,
+    pub request_headers: Vec<HttpResponseHeader>,
     pub remote_addr: Option<String>,
     pub status: i32,
     pub status_reason: Option<String>,
@@ -846,6 +847,7 @@ pub enum HttpResponseIden {
     ElapsedHeaders,
     Error,
     Headers,
+    RequestHeaders,
     RemoteAddr,
     Status,
     StatusReason,
@@ -859,6 +861,7 @@ impl<'s> TryFrom<&Row<'s>> for HttpResponse {
 
     fn try_from(r: &Row<'s>) -> Result<Self, Self::Error> {
         let headers: String = r.get("headers")?;
+        let request_headers: String = r.get("request_headers")?;
         let state: String = r.get("state")?;
         Ok(Self {
             id: r.get("id")?,
@@ -879,6 +882,7 @@ impl<'s> TryFrom<&Row<'s>> for HttpResponse {
             state: serde_json::from_str(format!(r#""{state}""#).as_str()).unwrap(),
             body_path: r.get("body_path")?,
             headers: serde_json::from_str(headers.as_str()).unwrap_or_default(),
+            request_headers: serde_json::from_str(request_headers.as_str()).unwrap_or_default(),
         })
     }
 }

@@ -2215,6 +2215,10 @@ pub async fn update_http_response<R: Runtime>(
                 HttpResponseIden::Headers,
                 serde_json::to_string(&response.headers).unwrap_or_default().into(),
             ),
+            (
+                HttpResponseIden::RequestHeaders,
+                serde_json::to_string(&response.request_headers).unwrap_or_default().into(),
+            ),
             (HttpResponseIden::Version, response.version.as_ref().map(|s| s.as_str()).into()),
             (HttpResponseIden::State, serde_json::to_value(&response.state)?.as_str().into()),
             (
