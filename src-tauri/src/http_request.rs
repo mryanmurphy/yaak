@@ -409,7 +409,7 @@ pub async fn send_http_request<R: Runtime>(
     }
 
     // Add headers last, because previous steps may modify them
-    request_builder = request_builder.headers(headers);
+    request_builder = request_builder.headers(headers.clone());
 
     let mut sendable_req = match request_builder.build() {
         Ok(r) => r,
@@ -493,6 +493,7 @@ pub async fn send_http_request<R: Runtime>(
                 Ok(mut v) => {
                     let content_length = v.content_length();
                     let response_headers = v.headers().clone();
+                    let request_headers = headers.clone();
                     let dir = app_handle.path().app_data_dir().unwrap();
                     let base_dir = dir.join("responses");
                     create_dir_all(base_dir.clone()).await.expect("Failed to create responses dir");
@@ -509,6 +510,13 @@ pub async fn send_http_request<R: Runtime>(
                         r.status = v.status().as_u16() as i32;
                         r.status_reason = v.status().canonical_reason().map(|s| s.to_string());
                         r.headers = response_headers
+                            .iter()
+                            .map(|(k, v)| HttpResponseHeader {
+                                name: k.as_str().to_string(),
+                                value: v.to_str().unwrap_or_default().to_string(),
+                            })
+                            .collect();
+                        r.request_headers = request_headers
                             .iter()
                             .map(|(k, v)| HttpResponseHeader {
                                 name: k.as_str().to_string(),

@@ -37,7 +37,7 @@
   ],
   "definitions": {
     "Capability": {
-      "description": "A grouping and boundary mechanism developers can use to isolate access to the IPC layer.\n\nIt controls application windows fine grained access to the Tauri core, application, or plugin commands. If a window is not matching any capability then it has no access to the IPC layer at all.\n\nThis can be done to create groups of windows, based on their required system access, which can reduce impact of frontend vulnerabilities in less privileged windows. Windows can be added to a capability by exact name (e.g. `main-window`) or glob patterns like `*` or `admin-*`. A Window can have none, one, or multiple associated capabilities.\n\n## Example\n\n```json { \"identifier\": \"main-user-files-write\", \"description\": \"This capability allows the `main` window on macOS and Windows access to `filesystem` write related commands and `dialog` commands to enable programatic access to files selected by the user.\", \"windows\": [ \"main\" ], \"permissions\": [ \"core:default\", \"dialog:open\", { \"identifier\": \"fs:allow-write-text-file\", \"allow\": [{ \"path\": \"$HOME/test.txt\" }] }, ], \"platforms\": [\"macOS\",\"windows\"] } ```",
+      "description": "A grouping and boundary mechanism developers can use to isolate access to the IPC layer.\n\nIt controls application windows' and webviews' fine grained access to the Tauri core, application, or plugin commands. If a webview or its window is not matching any capability then it has no access to the IPC layer at all.\n\nThis can be done to create groups of windows, based on their required system access, which can reduce impact of frontend vulnerabilities in less privileged windows. Windows can be added to a capability by exact name (e.g. `main-window`) or glob patterns like `*` or `admin-*`. A Window can have none, one, or multiple associated capabilities.\n\n## Example\n\n```json { \"identifier\": \"main-user-files-write\", \"description\": \"This capability allows the `main` window on macOS and Windows access to `filesystem` write related commands and `dialog` commands to enable programatic access to files selected by the user.\", \"windows\": [ \"main\" ], \"permissions\": [ \"core:default\", \"dialog:open\", { \"identifier\": \"fs:allow-write-text-file\", \"allow\": [{ \"path\": \"$HOME/test.txt\" }] }, ], \"platforms\": [\"macOS\",\"windows\"] } ```",
       "type": "object",
       "required": [
         "identifier",
@@ -70,14 +70,14 @@
           "type": "boolean"
         },
         "windows": {
-          "description": "List of windows that are affected by this capability. Can be a glob pattern.\n\nOn multiwebview windows, prefer [`Self::webviews`] for a fine grained access control.\n\n## Example\n\n`[\"main\"]`",
+          "description": "List of windows that are affected by this capability. Can be a glob pattern.\n\nIf a window label matches any of the patterns in this list, the capability will be enabled on all the webviews of that window, regardless of the value of [`Self::webviews`].\n\nOn multiwebview windows, prefer specifying [`Self::webviews`] and omitting [`Self::windows`] for a fine grained access control.\n\n## Example\n\n`[\"main\"]`",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "webviews": {
-          "description": "List of webviews that are affected by this capability. Can be a glob pattern.\n\nThis is only required when using on multiwebview contexts, by default all child webviews of a window that matches [`Self::windows`] are linked.\n\n## Example\n\n`[\"sub-webview-one\", \"sub-webview-two\"]`",
+          "description": "List of webviews that are affected by this capability. Can be a glob pattern.\n\nThe capability will be enabled on all the webviews whose label matches any of the patterns in this list, regardless of whether the webview's window label matches a pattern in [`Self::windows`].\n\n## Example\n\n`[\"sub-webview-one\", \"sub-webview-two\"]`",
           "type": "array",
           "items": {
             "type": "string"
@@ -2138,9 +2138,24 @@
           "const": "core:app:allow-default-window-icon"
         },
         {
+          "description": "Enables the fetch_data_store_identifiers command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:allow-fetch-data-store-identifiers"
+        },
+        {
+          "description": "Enables the identifier command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:allow-identifier"
+        },
+        {
           "description": "Enables the name command without any pre-configured scope.",
           "type": "string",
           "const": "core:app:allow-name"
+        },
+        {
+          "description": "Enables the remove_data_store command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:allow-remove-data-store"
         },
         {
           "description": "Enables the set_app_theme command without any pre-configured scope.",
@@ -2173,9 +2188,24 @@
           "const": "core:app:deny-default-window-icon"
         },
         {
+          "description": "Denies the fetch_data_store_identifiers command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:deny-fetch-data-store-identifiers"
+        },
+        {
+          "description": "Denies the identifier command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:deny-identifier"
+        },
+        {
           "description": "Denies the name command without any pre-configured scope.",
           "type": "string",
           "const": "core:app:deny-name"
+        },
+        {
+          "description": "Denies the remove_data_store command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:deny-remove-data-store"
         },
         {
           "description": "Denies the set_app_theme command without any pre-configured scope.",
@@ -2973,6 +3003,11 @@
           "const": "core:window:allow-internal-toggle-maximize"
         },
         {
+          "description": "Enables the is_always_on_top command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:allow-is-always-on-top"
+        },
+        {
           "description": "Enables the is_closable command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:allow-is-closable"
@@ -3336,6 +3371,11 @@
           "description": "Denies the internal_toggle_maximize command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:deny-internal-toggle-maximize"
+        },
+        {
+          "description": "Denies the is_always_on_top command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:deny-is-always-on-top"
         },
         {
           "description": "Denies the is_closable command without any pre-configured scope.",
@@ -5415,6 +5455,151 @@
         {
           "description": "Default permissions for the plugin",
           "type": "string",
+          "const": "yaak-git:default"
+        },
+        {
+          "description": "Enables the add command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-add"
+        },
+        {
+          "description": "Enables the branch command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-branch"
+        },
+        {
+          "description": "Enables the checkout command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-checkout"
+        },
+        {
+          "description": "Enables the checkout_remote command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-checkout-remote"
+        },
+        {
+          "description": "Enables the commit command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-commit"
+        },
+        {
+          "description": "Enables the delete_branch command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-delete-branch"
+        },
+        {
+          "description": "Enables the fetch_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-fetch-all"
+        },
+        {
+          "description": "Enables the initialize command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-initialize"
+        },
+        {
+          "description": "Enables the log command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-log"
+        },
+        {
+          "description": "Enables the merge_branch command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-merge-branch"
+        },
+        {
+          "description": "Enables the pull command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-pull"
+        },
+        {
+          "description": "Enables the push command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-push"
+        },
+        {
+          "description": "Enables the status command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-status"
+        },
+        {
+          "description": "Enables the unstage command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:allow-unstage"
+        },
+        {
+          "description": "Denies the add command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-add"
+        },
+        {
+          "description": "Denies the branch command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-branch"
+        },
+        {
+          "description": "Denies the checkout command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-checkout"
+        },
+        {
+          "description": "Denies the checkout_remote command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-checkout-remote"
+        },
+        {
+          "description": "Denies the commit command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-commit"
+        },
+        {
+          "description": "Denies the delete_branch command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-delete-branch"
+        },
+        {
+          "description": "Denies the fetch_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-fetch-all"
+        },
+        {
+          "description": "Denies the initialize command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-initialize"
+        },
+        {
+          "description": "Denies the log command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-log"
+        },
+        {
+          "description": "Denies the merge_branch command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-merge-branch"
+        },
+        {
+          "description": "Denies the pull command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-pull"
+        },
+        {
+          "description": "Denies the push command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-push"
+        },
+        {
+          "description": "Denies the status command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-status"
+        },
+        {
+          "description": "Denies the unstage command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-git:deny-unstage"
+        },
+        {
+          "description": "Default permissions for the plugin",
+          "type": "string",
           "const": "yaak-license:default"
         },
         {
@@ -5428,6 +5613,11 @@
           "const": "yaak-license:allow-check"
         },
         {
+          "description": "Enables the deactivate command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-license:allow-deactivate"
+        },
+        {
           "description": "Denies the activate command without any pre-configured scope.",
           "type": "string",
           "const": "yaak-license:deny-activate"
@@ -5436,6 +5626,86 @@
           "description": "Denies the check command without any pre-configured scope.",
           "type": "string",
           "const": "yaak-license:deny-check"
+        },
+        {
+          "description": "Denies the deactivate command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-license:deny-deactivate"
+        },
+        {
+          "description": "Default permissions for the plugin",
+          "type": "string",
+          "const": "yaak-models:default"
+        },
+        {
+          "description": "Enables the delete command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-delete"
+        },
+        {
+          "description": "Enables the duplicate command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-duplicate"
+        },
+        {
+          "description": "Enables the get_settings command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-get-settings"
+        },
+        {
+          "description": "Enables the grpc_events command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-grpc-events"
+        },
+        {
+          "description": "Enables the upsert command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-upsert"
+        },
+        {
+          "description": "Enables the websocket_events command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-websocket-events"
+        },
+        {
+          "description": "Enables the workspace_models command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:allow-workspace-models"
+        },
+        {
+          "description": "Denies the delete command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-delete"
+        },
+        {
+          "description": "Denies the duplicate command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-duplicate"
+        },
+        {
+          "description": "Denies the get_settings command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-get-settings"
+        },
+        {
+          "description": "Denies the grpc_events command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-grpc-events"
+        },
+        {
+          "description": "Denies the upsert command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-upsert"
+        },
+        {
+          "description": "Denies the websocket_events command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-websocket-events"
+        },
+        {
+          "description": "Denies the workspace_models command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-models:deny-workspace-models"
         },
         {
           "description": "Default permissions for the plugin",
@@ -5481,6 +5751,161 @@
           "description": "Denies the watch command without any pre-configured scope.",
           "type": "string",
           "const": "yaak-sync:deny-watch"
+        },
+        {
+          "description": "Default permissions for the plugin",
+          "type": "string",
+          "const": "yaak-ws:default"
+        },
+        {
+          "description": "Enables the cancel command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-cancel"
+        },
+        {
+          "description": "Enables the close command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-close"
+        },
+        {
+          "description": "Enables the connect command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-connect"
+        },
+        {
+          "description": "Enables the delete_connection command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-delete-connection"
+        },
+        {
+          "description": "Enables the delete_connections command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-delete-connections"
+        },
+        {
+          "description": "Enables the delete_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-delete-request"
+        },
+        {
+          "description": "Enables the duplicate_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-duplicate-request"
+        },
+        {
+          "description": "Enables the list_connections command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-list-connections"
+        },
+        {
+          "description": "Enables the list_events command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-list-events"
+        },
+        {
+          "description": "Enables the list_requests command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-list-requests"
+        },
+        {
+          "description": "Enables the list_websocket_connections command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-list-websocket-connections"
+        },
+        {
+          "description": "Enables the list_websocket_requests command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-list-websocket-requests"
+        },
+        {
+          "description": "Enables the send command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-send"
+        },
+        {
+          "description": "Enables the upsert_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-upsert-request"
+        },
+        {
+          "description": "Enables the upsert_websocket_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:allow-upsert-websocket-request"
+        },
+        {
+          "description": "Denies the cancel command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-cancel"
+        },
+        {
+          "description": "Denies the close command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-close"
+        },
+        {
+          "description": "Denies the connect command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-connect"
+        },
+        {
+          "description": "Denies the delete_connection command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-delete-connection"
+        },
+        {
+          "description": "Denies the delete_connections command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-delete-connections"
+        },
+        {
+          "description": "Denies the delete_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-delete-request"
+        },
+        {
+          "description": "Denies the duplicate_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-duplicate-request"
+        },
+        {
+          "description": "Denies the list_connections command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-list-connections"
+        },
+        {
+          "description": "Denies the list_events command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-list-events"
+        },
+        {
+          "description": "Denies the list_requests command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-list-requests"
+        },
+        {
+          "description": "Denies the list_websocket_connections command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-list-websocket-connections"
+        },
+        {
+          "description": "Denies the list_websocket_requests command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-list-websocket-requests"
+        },
+        {
+          "description": "Denies the send command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-send"
+        },
+        {
+          "description": "Denies the upsert_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-upsert-request"
+        },
+        {
+          "description": "Denies the upsert_websocket_request command without any pre-configured scope.",
+          "type": "string",
+          "const": "yaak-ws:deny-upsert-websocket-request"
         }
       ]
     },
